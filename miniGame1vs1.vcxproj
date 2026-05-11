@@ -129,6 +129,9 @@
   <ItemGroup>
     <ClCompile Include="miniGame1vs1.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="additional.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
