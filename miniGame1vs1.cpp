@@ -143,8 +143,7 @@ public:
 	}
 
 	// атака другого существа
-	// для игрока
-	void attack(Creature& unit, int& choise) {
+	void attack(Creature& unit, int choise) {
 		switch (choise)
 		{
 		// тяжелая атака
@@ -164,11 +163,6 @@ public:
 			break;
 		}
 		
-	}
-
-	// для моба
-	void attack(Creature& unit) {
-		unit.getDamage(damage + weapon.getDamageAttack());
 	}
 
 	// замена оружия
@@ -242,6 +236,11 @@ public:
 		if (HP > HP_max) HP = HP_max;
 		cout << "Вы восстановили здоровье. Текущее HP: " << HP << "/" << HP_max << endl;
 	}
+
+	// дружественные функции
+	// сохранение/загрузка
+	friend ofstream& operator << (ofstream&, Creature&);
+	friend ifstream& operator >> (ifstream&, Creature&);
 };
 
 // класс магазина
@@ -308,7 +307,7 @@ bool round(Creature& player, Creature& monster) {
 		}
 			
 		else
-			monster.attack(player);
+			monster.attack(player, random::get_random_by_lover_upper_limit(1, 3));
 
 		who_fight = !who_fight;
 	}
@@ -316,9 +315,9 @@ bool round(Creature& player, Creature& monster) {
 	return player.isLife();
 }
 
-ofstream operator << (ofstream& fin, Creature& player) {
-	for (double parametr : player.saveParameters())
-		fin << parametr << ' ';
+ofstream& operator << (ofstream& fout, Creature& player) {
+
+	fout << player.HP << ' ' << player.HP_max << ' ' << player.damage << ' ' << player.money << ' ';
 
 	// переменные для сохранения
 	string t_name;
@@ -326,17 +325,29 @@ ofstream operator << (ofstream& fin, Creature& player) {
 
 	// сохранение оружия
 	player.saveInfoWeapon(t_name, t_val);
-	fin << t_name << ' ' << t_name;
+	fout << t_name << ' ' << t_name;
 
 	// сохранение оружия
 	player.saveInfoArmor(t_name, t_val);
-	fin << t_name << ' ' << t_name;
+	fout << t_name << ' ' << t_name;
+
+	return fout;
 }
 
-ifstream operator >> (ifstream& fin, Creature& player) {
+ifstream& operator >> (ifstream& fin, Creature& player) {
+	// имя героя
+	string name;
+
+	// основные характеристики
+	double HP_max;
+	double HP;
+	double damage;
+	bool dead;
+
+	// количество монет
+	double money;
 	
-	
-	;
+	return fin;
 }
 
 void saveGame(Creature& player, int& round) {
@@ -353,6 +364,8 @@ void loadGame(Creature& player, int& round) {
 	ifstream fin_load;
 
 	fin_load >> player;
+
+	fin_load >> round;
 
 	fin_load.close();
 }
