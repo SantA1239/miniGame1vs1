@@ -217,6 +217,24 @@ public:
 
 	}
 
+	void loadParametrs(// имя героя
+			string name,
+
+		// основные характеристики
+		double HP_max,
+		double HP,
+		double damage,
+		bool dead,
+
+		// оружие и броня
+		Weapon weapon,
+		Armor armor,
+
+		// количество монет
+		double money) {
+
+	}
+
 	// Работа с деньгами
 	double getMoney() const { return money; }
 
