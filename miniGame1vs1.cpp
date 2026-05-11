@@ -5,10 +5,33 @@
 #include "additional.h"
 using namespace std;
 
+const string INFORMATION_ABOUT_DEVELOPMENT = "Тим-лид: Сафронов Егор\nДизайнер: Торасян Размик\nСценарист: Садыков Арсен\nПрограммисты: Гаврилов Матвей, Уколов Глеб, Щербаков Петр";
+
 const double ARMOR_DEFEND_CONST = 50.;
 
 const vector<string> DODGE_PHRASE = {
-	""
+	"Уга буга политех\n"
+};
+const vector<std::string> opponents = {
+		"гном детского сада",
+		"Саид маринованый",
+		"Петр колдун света",
+		"гоблин",
+		"трушный математик Егор",
+		"Глеб Каловрат",
+		"Размик советник Короля",
+		"Матвей Общоровский",
+		"Арсен одинокий дворецкий",
+		"болтный симбиот",
+		"медведь",
+		"спайк",
+		"ворон",
+		"слизь",
+		"монстр-дерево",
+		"наблюдатель",
+		"крыса",
+		"сабака",
+		"матодор"
 };
 
 // класс брони
@@ -149,19 +172,18 @@ public:
 		{
 		// тяжелая атака
 		case 1:
-			unit.getDamage(damage + weapon.getDamageAttack(), 60);
+			unit.getDamage((damage + weapon.getDamageAttack()) * 1.15, 60);
+			break;
 
 		// быстрая атака
 		case 2:
 			unit.getDamage(damage + weapon.getDamageAttack(), 100);
+			break;
 
 		// лечение себя
 		case 3:
-			// лечение на 30%
-			heal(HP_max * 0.3);
-
-		default:
-			break;
+			// лечение на 15%
+			heal(HP_max * 0.15);
 		}
 		
 	}
@@ -218,7 +240,7 @@ public:
 	void heal(double amount) {
 		HP += amount;
 		if (HP > HP_max) HP = HP_max;
-		cout << "Вы восстановили здоровье. Текущее HP: " << HP << "/" << HP_max << endl;
+		cout << name << " восстановили здоровье.Текущее HP : " << HP << " / " << HP_max << endl;
 	}
 
 	// дружественные функции
@@ -244,7 +266,7 @@ public:
 class Shop {
 public:
 	void visit(Creature& player) {
-		int choice;
+		int choice = 100;
 		bool exiting = false;
 
 		while (choice) {
@@ -260,7 +282,7 @@ public:
 			switch (choice) {
 			case 1:
 				if (player.spendMoney(50)) {
-					player.equipWeapon("Стальной Меч", 20);
+					player.equipWeapon("Стальной Меч", 20.);
 					cout << "Вы купили Стальной Меч!" << endl;
 				}
 				else cout << "Недостаточно золота!" << endl;
@@ -268,7 +290,7 @@ public:
 
 			case 2:
 				if (player.spendMoney(60)) {
-					player.equipArmor("Усиленная Броня", 5.0);
+					player.equipArmor("Усиленная Броня", 5.);
 					cout << "Вы купили Усиленную Броню!" << endl;
 				}
 				else cout << "Недостаточно золота!" << endl;
@@ -276,7 +298,7 @@ public:
 
 			case 3:
 				if (player.spendMoney(20)) {
-					player.heal(30);
+					player.heal(30.);
 				}
 				else cout << "Недостаточно золота!" << endl;
 				break;
@@ -291,26 +313,26 @@ public:
 	}
 };
 
-// функция игры
-bool round(Creature& player, Creature& monster) {
-	bool who_fight = true;
-	while (player.isLife() && monster.isLife())
-	{
-		if (who_fight) {
-			int choise;
-			choise = valid::valid_num("Введите действие: сильная атака (1), быстрая атака (2), лечиться (3)...: ", "Ошибка ввода! Повторите: ", 1, 3);
-				
-			player.attack(monster, choise);
-		}
-			
-		else
-			monster.attack(player, random::get_random_by_lover_upper_limit(1, 3));
-
-		who_fight = !who_fight;
-	}
-
-	return player.isLife();
-}
+//// функция игры
+//bool round(Creature& player, Creature& monster) {
+//	bool who_fight = true;
+//	while (player.isLife() && monster.isLife())
+//	{
+//		if (who_fight) {
+//			int choise;
+//			choise = valid::valid_num("Введите действие: сильная атака (1), быстрая атака (2), лечиться (3)...: ", "Ошибка ввода! Повторите: ", 1, 3);
+//				
+//			player.attack(monster, choise);
+//		}
+//			
+//		else
+//			monster.attack(player, random::get_random_by_lover_upper_limit(1, 3));
+//
+//		who_fight = !who_fight;
+//	}
+//
+//	return player.isLife();
+//}
 
 ofstream& operator << (ofstream& fout, Creature& player) {
 
@@ -372,46 +394,110 @@ void saveGame(Creature& player, int& round) {
 void loadGame(Creature& player, int& round) {
 	ifstream fin_load("save_game.txt");
 
-	fin_load >> player;
+	// Проверка на пустой файл
+	if (fin_load.peek() == ifstream::traits_type::eof()) {
+		cout << "Файл сохранения пуст! Загрузка невозможна." << endl;
+		fin_load.close();
+		return;
+	}
 
-	fin_load >> round;
+	// Пытаемся загрузить данные
+	if (fin_load >> player >> round) {
+		cout << "Игра успешно загружена!" << endl;
+	}
+	else {
+		cout << "Ошибка при загрузке! Файл поврежден." << endl;
+	}
 
 	fin_load.close();
 }
 
 int main() {
 	setlocale(LC_ALL, "ru");
-	
-	Creature player("Max", 100, 1, 1000, "Кнут", 13, "Плащ", 0);
-	int round = 103;
-	loadGame(player, round);
-	player.print_parametrs();
-	saveGame(player, round);
-	/*loadGame(player, round);*/
-	
 
-	//// объект класса игрока
-	//Creature player("Player", 100, 5, 0, "Меч", 10, "Латы", 3);
-	//// количество раундов
-	//int round = 1;
-	//int final_round = 100;
+	Creature player("Player", 100, 5, 20, "Меч", 10, "Латы", 3);
+	Shop shop;
+	int round = 1;
+	const int FINAL_ROUND = 25;
 
-	//bool who_fight = true;
-	//
-	//while (round < final_round) {
-	//	// действие: бой, сохраниение и т. д.
-	//	char action;
-	//	cout << "Сохраниться (S), в бой (B)";
-	//	cin >> action;
-	//	
-	//	while (!(action == 'S' || action == 'B'))
-	//	{
-	//		cout << "Ошибка! Повторите попытку: ";
-	//		cin >> action;
-	//	}
+	char loading;
+	cout << "Загрузиться? (y/n): ";
+	cin >> loading;
+	if (loading == 'y') {
+			loadGame(player, round);
+	}
+	while (player.isLife() && round <= FINAL_ROUND) {
+		cout << "================================" << endl;
+		cout << "РАУНД " << round << " ИЗ " << FINAL_ROUND << endl;
+
+		bool round_processed = false; // короче флаг чтобы в бой не заходитьь если выбрали сохранение
+
+		// 1. Магазин (каждые 5 раундов)
+		if (round % 5 == 0 && round != FINAL_ROUND) {
+			cout << "[!]  На пути Кировский РЫНОК!" << endl;
+			shop.visit(player);
+		}
+
+		// 2. Выбор действия
+		char action;
+		cout << "Сохраниться (S), В бой (B): ";
+		cin >> action;
+
+		if (action == 'S' || action == 's') {
+			saveGame(player, round);
+			cout << "Игра сохранена." << endl;
+
+		}
+		else if (action == 'B' || action == 'b') {
+			// 3. Создание противника
+			string m_name;
+			if (round == FINAL_ROUND) {
+				m_name = "БОСС Канабис";
+			}
+			else {
+
+				int randomIndex = random::get_random_by_lover_upper_limit(0, opponents.size() - 1);
+				m_name = opponents[randomIndex];
+			}
+
+			double m_hp = (round == FINAL_ROUND) ? 250.0 : (50.0 + round * 5);
+			double m_dmg = (round == FINAL_ROUND) ? 20.0 : (5.0 + round);
+
+			Creature monster(m_name, m_hp, m_dmg, "Когти", 5, "Шкура", 2);
+			bool who_fight = true;
+
+			cout << "--- НАЧАЛО БОЯ С " << m_name << " ---" << endl;
 
 
-	//}
+			while (player.isLife() && monster.isLife()) {
+				if (who_fight) {
+					int choise = valid::valid_num("Ваш ход (1-тяжелая, 2-быстрая, 3-хил): ", "Ошибка: ", 1, 3);
+					player.attack(monster, choise);
+				}
+				else {
+					cout << "[Ход монстра] ";
+					monster.attack(player, random::get_random_by_lover_upper_limit(1, 2));
+				}
+				who_fight = !who_fight;
+			}
+
+			// 4. Итоги боя
+			if (player.isLife()) {
+				cout << "Вы победили в раунде " << round << "!" << endl;
+				player.addMoney(30);
+
+				if (round == FINAL_ROUND) {
+					cout << "ПОБЕДА! Win!" << endl;
+				}
+
+				round++;
+				round_processed = true;
+			}
+			else {
+				cout << "Ты умер в раунде " << round << endl;
+			}
+		}
+	}
 
 	return 0;
 }
