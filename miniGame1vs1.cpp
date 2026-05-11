@@ -81,6 +81,7 @@ private:
 	double money;
 
 public:
+	Creature() {}
 	Creature(string name_unit, double HP_unit, double damage_unit, double money_unit, 
 		string start_weapon, double value_attack_weapon,
 		string start_armor, double value_def_armor) {
@@ -172,7 +173,7 @@ public:
 
 	// замена брони
 	void equipArmor(string name_new_armor, double new_val_def_weapons) {
-		weapon.setValue(name_new_armor, new_val_def_weapons);
+		armor.setValue(name_new_armor, new_val_def_weapons);
 	}
 
 	// функции для сохранения персонажа
@@ -199,41 +200,6 @@ public:
 		val_armor = armor.getValArmor();
 	}
 
-	void loadParametrs(// имя героя
-			string name,
-
-		// основные характеристики
-		double HP_max,
-		double HP,
-		double damage,
-		bool dead,
-
-		// оружие и броня
-		Weapon weapon,
-		Armor armor,
-
-		// количество монет
-		double money) {
-
-	}
-
-	void loadParametrs(// имя героя
-			string name,
-
-		// основные характеристики
-		double HP_max,
-		double HP,
-		double damage,
-		bool dead,
-
-		// оружие и броня
-		Weapon weapon,
-		Armor armor,
-
-		// количество монет
-		double money) {
-
-	}
 
 	// Работа с деньгами
 	double getMoney() const { return money; }
@@ -259,6 +225,19 @@ public:
 	// сохранение/загрузка
 	friend ofstream& operator << (ofstream&, Creature&);
 	friend ifstream& operator >> (ifstream&, Creature&);
+
+	// вывод характеристик для отладки
+	void print_parametrs() {
+		cout << "Имя: " << name << '\n' <<
+			"Жизни: " << HP << '\n' <<
+			"Жизни макс.: " << HP_max << '\n' <<
+			"Урон: " << damage << '\n' <<
+			"Монеты: " << money << '\n' <<
+			"Имя оружия: " << weapon.getName() << '\n' <<
+			"Значение урона: " << weapon.getDamageAttack() << '\n' <<
+			"Имя брони: " << armor.getName() << '\n' <<
+			"Значение брони: " << armor.getValArmor() << '\n';
+	}
 };
 
 // класс магазина
@@ -335,7 +314,11 @@ bool round(Creature& player, Creature& monster) {
 
 ofstream& operator << (ofstream& fout, Creature& player) {
 
-	fout << player.HP << ' ' << player.HP_max << ' ' << player.damage << ' ' << player.money << ' ';
+	fout << player.name << ' ' << 
+		player.HP << ' ' <<
+		player.HP_max << ' ' <<
+		player.damage << ' ' <<
+		player.money << ' ';
 
 	// переменные для сохранения
 	string t_name;
@@ -343,27 +326,35 @@ ofstream& operator << (ofstream& fout, Creature& player) {
 
 	// сохранение оружия
 	player.saveInfoWeapon(t_name, t_val);
-	fout << t_name << ' ' << t_name;
+	fout << t_name << ' ' << t_val << ' ';
 
 	// сохранение оружия
 	player.saveInfoArmor(t_name, t_val);
-	fout << t_name << ' ' << t_name;
+	fout << t_name << ' ' << t_val << ' ';
 
 	return fout;
 }
 
 ifstream& operator >> (ifstream& fin, Creature& player) {
 	// имя героя
-	string name;
+	fin >> player.name;
 
 	// основные характеристики
-	double HP_max;
-	double HP;
-	double damage;
-	bool dead;
+	fin >> player.HP_max;
+	fin >> player.HP;
+	fin >> player.damage;
+	fin >> player.money;
 
-	// количество монет
-	double money;
+	string t_w_name;
+	int t_w_val;
+
+	fin >> t_w_name >> t_w_val;
+	player.equipWeapon(t_w_name, t_w_val);
+
+	string t_a_name;
+	int t_a_val;
+	fin >> t_a_name >> t_a_val;
+	player.equipArmor(t_a_name, t_a_val);
 	
 	return fin;
 }
@@ -379,7 +370,7 @@ void saveGame(Creature& player, int& round) {
 }
 
 void loadGame(Creature& player, int& round) {
-	ifstream fin_load;
+	ifstream fin_load("save_game.txt");
 
 	fin_load >> player;
 
@@ -391,28 +382,36 @@ void loadGame(Creature& player, int& round) {
 int main() {
 	setlocale(LC_ALL, "ru");
 	
-	// объект класса игрока
-	Creature player("Player", 100, 5, 0, "Меч", 10, "Латы", 3);
-	// количество раундов
-	int round = 1;
-	int final_round = 100;
-
-	bool who_fight = true;
+	Creature player("Max", 100, 1, 1000, "Кнут", 13, "Плащ", 0);
+	int round = 103;
+	loadGame(player, round);
+	player.print_parametrs();
+	saveGame(player, round);
+	/*loadGame(player, round);*/
 	
-	while (round < final_round) {
-		// действие: бой, сохраниение и т. д.
-		char action;
-		cout << "Сохраниться (S), в бой (B)";
-		cin >> action;
-		
-		while (!(action == 'S' || action == 'B'))
-		{
-			cout << "Ошибка! Повторите попытку: ";
-			cin >> action;
-		}
+
+	//// объект класса игрока
+	//Creature player("Player", 100, 5, 0, "Меч", 10, "Латы", 3);
+	//// количество раундов
+	//int round = 1;
+	//int final_round = 100;
+
+	//bool who_fight = true;
+	//
+	//while (round < final_round) {
+	//	// действие: бой, сохраниение и т. д.
+	//	char action;
+	//	cout << "Сохраниться (S), в бой (B)";
+	//	cin >> action;
+	//	
+	//	while (!(action == 'S' || action == 'B'))
+	//	{
+	//		cout << "Ошибка! Повторите попытку: ";
+	//		cin >> action;
+	//	}
 
 
-	}
+	//}
 
 	return 0;
 }
