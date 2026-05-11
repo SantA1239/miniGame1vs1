@@ -39,7 +39,6 @@ namespace random {
 	// get_random_by_lover_upper_limit - возвращает число от lover_limit до upper_limit
 	// int lover_limit - нижн€€ граница (включительно), int upper_limit - верхн€€ граница (включительно)
 	int get_random_by_lover_upper_limit(int lover_limit, int upper_limit) {
-		srand(time(0));
-		return rand() % (upper_limit + 1) + lover_limit;
+		return rand() % upper_limit + lover_limit;
 	}
 }

@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 #include "additional.h"
+#include <chrono>
+#include <thread>
 using namespace std;
 
 const string INFORMATION_ABOUT_DEVELOPMENT = "Тим-лид: Сафронов Егор\nДизайнер: Торасян Размик\nСценарист: Садыков Арсен\nПрограммисты: Гаврилов Матвей, Уколов Глеб, Щербаков Петр";
@@ -10,7 +12,11 @@ const string INFORMATION_ABOUT_DEVELOPMENT = "Тим-лид: Сафронов Е
 const double ARMOR_DEFEND_CONST = 50.;
 
 const vector<string> DODGE_PHRASE = {
-	"Уга буга политех\n"
+	"Уга буга политех", 
+	"Атака достигла лишь тени противника", 
+	"Удар прошёл сквозь дымку — враг уже сместился в сторону", 
+	"Меч описал красивую дугу. Красивую, но бесполезную", 
+	"Это было близко… слишком близко"
 };
 const vector<std::string> opponents = {
 		"гном детского сада",
@@ -33,6 +39,75 @@ const vector<std::string> opponents = {
 		"сабака",
 		"матодор"
 };
+
+namespace {
+
+	const vector<string>& monsterArt() {
+		static const vector<string> lines = {
+			R"(		          		        _   ,			  ,      ,      )",
+			R"(		          	  	     _,/ \	             /(.-""-.)\     )",
+			R"(		      	  	        (_/  /	         |\  \/      \/  /| )",
+			R"(	  |	   \      	  	     /  /	         | \ / ====== \ / | )",
+			R"(	  |	    \               /  /	         \  '-\  ()  /-'  / )",
+			R"(	  |    _/     	  	   /  /	              '.   \ -- /   .'  )",
+			R"(    |    /              /  /                  '--|    |--'    )",
+			R"(	  |   |   	  	  /__/  /__/                   |    |       )",
+			R"(	  |   |_____________/  \			    	   |    |       )",
+			R"(	  |_________________\__/  			    	   |    |       )",
+			R"(	    								           /    \       )",
+			R"(	    								                        )"
+		};
+		return lines;
+	}
+
+	const vector<string>& monsterArtMirrored() {
+		static const vector<string> lines = {
+			R"(      ,      ,  			                                 	                        )",
+			R"(    /\).-""-.(/\                          / \,_                 	                    )",
+			R"( |/ \/\      /\/  \|                      \  \_)                 	                    )",
+			R"( |   \ ====== /    |                       \  \             /    |                  	)",
+			R"( \  '-\  )(  /-'  /                         \  \            /     |                  	)",
+			R"(   '.  \ -- /   .'                           \  \           \_    |                 	)",
+			R"(    '--|    |--'                              \  \           \    |                   )",
+			R"(       |    |                               \__\  \__\        |   |                 	)",
+			R"(       |    |   	    	                     /  \___________|   |                 	)",
+			R"(       |    |   	    	                     \__/_______________|                 	)",
+			R"(       \    /           								    	                        )",
+			R"(                        								    	                        )"
+		};
+		return lines;
+	}
+
+	void pauseBattleGraphic() {
+		cout.flush();
+		this_thread::sleep_for(chrono::seconds(2));
+	}
+
+} // namespace
+
+void drawMonster() {
+	for (const string& line : monsterArt())
+		cout << line << endl;
+}
+
+void drawMonsterMirrored() {
+	for (const string& line : monsterArtMirrored())
+		cout << line << endl;
+}
+
+// Зеркальная псевдографика перед атакой монстра (1 — тяжёлая, 2 — быстрая)
+void showMonsterTurnMirrored(int m_action) {
+	if (m_action != 1 && m_action != 2)
+		return;
+	cout << "\n";
+	if (m_action == 1)
+		cout << "       >>> МОНСТР: ТЯЖЁЛЫЙ УДАР <<<\n\n";
+	else
+		cout << "       >>> МОНСТР: БЫСТРЫЙ УДАР <<<\n\n";
+	drawMonsterMirrored();
+	pauseBattleGraphic();
+	cout << "\n";
+}
 
 // класс брони
 class Armor {
@@ -151,18 +226,23 @@ public:
 	void getDamage(int dmg, int chance) {
 		if (random::if_chance(chance)) {
 			HP -= armor.getDamageArmor(dmg);
-
+			cout << "\n------------------------------\n";
 			if (HP > 0) {
-				cout << "Персонаж " << name << " получил " << dmg << " урона." << endl << "Осталось " << HP << " здоровья." << endl;
+				cout << "\n>  " << name << " получил урон!  <"
+					<< "\n   |- Урон: " << dmg
+					<< "\n   |- Здоровье: " << HP << "/" << HP_max << endl;
 			}
 			else {
 				HP = 0;
 				cout << "Персонаж " << name << " умер." << endl;
 				dead = true;
 			}
+			cout << "\n------------------------------\n";
 		}
 		else {
+			cout << "\n------------------------------\n";
 			cout << DODGE_PHRASE[random::get_random_by_lover_upper_limit(0, DODGE_PHRASE.size() - 1)];
+			cout << "\n------------------------------\n";
 		}
 	}
 
@@ -269,7 +349,7 @@ public:
 		int choice = 100;
 		bool exiting = false;
 
-		while (choice) {
+		while (!exiting) {
 			cout << "\n--- ДОБРО ПОЖАЛОВАТЬ В МАГАЗИН ---" << endl;
 			cout << "Ваше золото: " << player.getMoney() << endl;
 			cout << "1. Купить Стальной Меч (Урон +20) - 50 монет" << endl;
@@ -278,11 +358,13 @@ public:
 			cout << "0. Выйти из магазина" << endl;
 			cout << "Выберите действие: ";
 			cin >> choice;
+			cin.clear();
+			cin.ignore(1000, '\n');
 
 			switch (choice) {
 			case 1:
 				if (player.spendMoney(50)) {
-					player.equipWeapon("Стальной Меч", 20.);
+					player.equipWeapon("Стальной_Меч", 20.);
 					cout << "Вы купили Стальной Меч!" << endl;
 				}
 				else cout << "Недостаточно золота!" << endl;
@@ -290,7 +372,7 @@ public:
 
 			case 2:
 				if (player.spendMoney(60)) {
-					player.equipArmor("Усиленная Броня", 5.);
+					player.equipArmor("Усиленная_Броня", 5.);
 					cout << "Вы купили Усиленную Броню!" << endl;
 				}
 				else cout << "Недостаточно золота!" << endl;
@@ -304,6 +386,7 @@ public:
 				break;
 
 			case 0:
+				exiting = !exiting;
 				break;
 
 			default:
@@ -312,27 +395,6 @@ public:
 		}
 	}
 };
-
-//// функция игры
-//bool round(Creature& player, Creature& monster) {
-//	bool who_fight = true;
-//	while (player.isLife() && monster.isLife())
-//	{
-//		if (who_fight) {
-//			int choise;
-//			choise = valid::valid_num("Введите действие: сильная атака (1), быстрая атака (2), лечиться (3)...: ", "Ошибка ввода! Повторите: ", 1, 3);
-//				
-//			player.attack(monster, choise);
-//		}
-//			
-//		else
-//			monster.attack(player, random::get_random_by_lover_upper_limit(1, 3));
-//
-//		who_fight = !who_fight;
-//	}
-//
-//	return player.isLife();
-//}
 
 ofstream& operator << (ofstream& fout, Creature& player) {
 
@@ -362,8 +424,9 @@ ifstream& operator >> (ifstream& fin, Creature& player) {
 	fin >> player.name;
 
 	// основные характеристики
-	fin >> player.HP_max;
 	fin >> player.HP;
+	fin >> player.HP_max;
+	
 	fin >> player.damage;
 	fin >> player.money;
 
@@ -414,6 +477,7 @@ void loadGame(Creature& player, int& round) {
 
 int main() {
 	setlocale(LC_ALL, "ru");
+	srand(time(0));
 
 	Creature player("Player", 100, 5, 20, "Меч", 10, "Латы", 3);
 	Shop shop;
@@ -472,11 +536,14 @@ int main() {
 			while (player.isLife() && monster.isLife()) {
 				if (who_fight) {
 					int choise = valid::valid_num("Ваш ход (1-тяжелая, 2-быстрая, 3-хил): ", "Ошибка: ", 1, 3);
+					//if (choise < 3)
+					//	drawMonster();
 					player.attack(monster, choise);
 				}
 				else {
-					cout << "[Ход монстра] ";
-					monster.attack(player, random::get_random_by_lover_upper_limit(1, 2));
+					int choise = random::get_random_by_lover_upper_limit(1, 3);
+					cout << "[Ход монстра] " << ((choise == 1) ? "Тяжелая атака\n" : (choise == 2) ? "Быстрая атака\n" : "Хил\n");
+					monster.attack(player, choise);
 				}
 				who_fight = !who_fight;
 			}
